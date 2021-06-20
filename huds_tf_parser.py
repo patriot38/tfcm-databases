@@ -1,10 +1,10 @@
 import requests
-import xml.etree.ElementTree as et
+import csv
 from bs4 import BeautifulSoup
 
 HEADERS = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:71.0) Gecko/20100101 Firefox/71.0',
            'accept': '*/*'}
-SOUND_PAGES_SWITCH_LINK = 'https://huds.tf/forum/forumdisplay.php?fid=27&page='
+SOUND_PAGES_SWITCH_LINK = 'https://huds.tf/site/d-Hitsound?page='
 HUDS_PAGES_SWITCH_LINK = 'https://huds.tf/forum/forumdisplay.php?fid=25&page='
 
 
@@ -23,46 +23,37 @@ def parse_sounds(page_number):
     html = get_page(url)
 
     soup = BeautifulSoup(html, "html5lib")
-    containers = soup.find_all('div', class_='card text-theme bg-theme mb-3')
+    containers = soup.find_all('div', class_='huds-directory')
 
     result = []
 
     for i in containers:
-        author_line = i.find('a', href=True, title=True)
-        if not author_line:
+        author_info = i.find('div', class_='huds-directory-lower')
+        if not author_info:
             continue
-        title = author_line['title']
-        author = i.find('a', href=True, title=False).get_text()
-        file_name = i.find('audio')['src']
-        link = 'https://huds.tf/forum/' + file_name
+        title = i.find('p', class_='huds-directory-item-name').find('a').text
+        author = i.find('p', class_='huds-directory-item-user').text.strip()
+        link = i.find('audio')['src']
+        link = 'https://huds.tf/forum/' + link
 
-        res = {'title': title,
-               'author': author,
-               'link': link}
+        res = [title, author, link]
         result.append(res)
 
     return result
 
 
 def write_db(db: list, db_type):
-    with open(db_type + '.xml', 'w') as file:
-        file.write('<db></db>')
-    tree = et.parse(db_type + '.xml')
-    root = tree.getroot()
-    iterator = 0
-    for i in db:
-        iterator += 1
-        new_element = et.SubElement(root, 'sound' + str(iterator))
-        new_element.set('title', i['title'])
-        new_element.set('author', i['author'])
-        new_element.set('link', i['link'])
-    tree.write(db_type + '.xml')
+    with open(db_type + '.csv', 'w') as file:
+        writer = csv.writer(file, delimiter=';')
+        writer.writerow(['title', 'author', 'link'])
+        for i in db:
+            writer.writerow(i)
 
 
 def main():
     # Sounds
     sounds_list = []
-    for i in range(1, 101):  # 101 pages
+    for i in range(1, 51):  # 101 pages
         sounds_list += parse_sounds(i)
         print('Parsing... Current page ' + str(i))
     write_db(sounds_list, 'sounds')
