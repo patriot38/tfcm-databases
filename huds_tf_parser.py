@@ -95,14 +95,12 @@ def write_hud_db(db: list):
 
 
 def main():
-    # Uncomment what you want to process
-
     # Sounds
-    # sounds_list = []
-    # for i in range(1, 51):  # 101 pages
-    #     sounds_list += parse_sounds(i)
-    #     print('Parsing... Current page ' + str(i))
-    # write_sound_db(sounds_list, 'sounds')
+    sounds_list = []
+    for i in range(1, 51):  # 101 pages
+        sounds_list += parse_sounds(i)
+        print('Parsing... Current page ' + str(i))
+    write_sound_db(sounds_list, 'sounds')
 
     # HUDs
     huds_list = []
